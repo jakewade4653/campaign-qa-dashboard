@@ -1,3 +1,10 @@
+/* =============================================================
+   CAMPAIGN QA DASHBOARD — Global Styles
+   Design: Precision Instrument / Swiss Grid Modernism
+   Brand: OMD Red (#E8321A) + MSC Navy (#000033)
+   Typography: DM Sans (UI) + DM Mono (technical fields)
+   ============================================================= */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -40,77 +47,56 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Brand tokens */
+  --color-omd-red: #E8321A;
+  --color-msc-navy: #000033;
+  --color-msc-lapis: #2D6C93;
+  --color-msc-cerulean: #3D8CA4;
+  --color-msc-moonstone: #68AEB6;
+  --color-msc-seafoam: #93C9CD;
+  --color-msc-lightblue: #ADD0D8;
 }
 
 :root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.235 0.015 65);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.235 0.015 65);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.235 0.015 65);
-  --secondary: oklch(0.98 0.001 286.375);
-  --secondary-foreground: oklch(0.4 0.015 65);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.141 0.005 285.823);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.235 0.015 65);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
-}
+  /* OMD Red as primary action color */
+  --primary: oklch(0.52 0.22 25);        /* #E8321A */
+  --primary-foreground: oklch(1 0 0);    /* white */
 
-.dark {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-500);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.85 0.005 65);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.85 0.005 65);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.85 0.005 65);
-  --secondary: oklch(0.24 0.006 286.033);
-  --secondary-foreground: oklch(0.7 0.005 65);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground:  oklch(0.92 0.005 65);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.85 0.005 65);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground:  oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+  /* MSC Navy as structural color */
+  --msc-navy: oklch(0.08 0.04 264);      /* #000033 */
+
+  --radius: 0.25rem;
+  --background: oklch(1 0 0);            /* pure white */
+  --foreground: oklch(0.12 0.02 264);    /* near-black, slightly navy */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.12 0.02 264);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.12 0.02 264);
+  --secondary: oklch(0.97 0.002 264);    /* very light gray */
+  --secondary-foreground: oklch(0.35 0.02 264);
+  --muted: oklch(0.96 0.003 264);
+  --muted-foreground: oklch(0.52 0.015 264);
+  --accent: oklch(0.94 0.008 264);
+  --accent-foreground: oklch(0.12 0.02 264);
+  --destructive: oklch(0.52 0.22 25);    /* OMD Red for destructive too */
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.90 0.004 264);
+  --input: oklch(0.90 0.004 264);
+  --ring: oklch(0.52 0.22 25);           /* OMD Red ring */
+  --chart-1: oklch(0.52 0.22 25);
+  --chart-2: oklch(0.45 0.12 220);
+  --chart-3: oklch(0.55 0.10 200);
+  --chart-4: oklch(0.65 0.08 190);
+  --chart-5: oklch(0.75 0.06 185);
+  --sidebar: oklch(0.08 0.04 264);       /* MSC Navy sidebar */
+  --sidebar-foreground: oklch(0.92 0.005 264);
+  --sidebar-primary: oklch(0.52 0.22 25); /* OMD Red active */
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.14 0.04 264);
+  --sidebar-accent-foreground: oklch(0.92 0.005 264);
+  --sidebar-border: oklch(0.18 0.04 264);
+  --sidebar-ring: oklch(0.52 0.22 25);
 }
 
 @layer base {
@@ -119,6 +105,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -131,27 +121,24 @@
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  code, .font-mono {
+    font-family: 'DM Mono', 'Courier New', monospace;
+  }
 }
 
 @layer components {
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
   .container {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
+    padding-left: 1rem;
     padding-right: 1rem;
   }
 
@@ -162,16 +149,73 @@
 
   @media (min-width: 640px) {
     .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
+      padding-left: 1.5rem;
       padding-right: 1.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      padding-left: 2rem; /* 32px - desktop padding */
+      padding-left: 2rem;
       padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
+      max-width: 1440px;
     }
+  }
+
+  /* QA Status Pills */
+  .status-pass {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium;
+    background-color: #DCFCE7;
+    color: #166534;
+  }
+  .status-fail {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium;
+    background-color: #FEE2E2;
+    color: #991B1B;
+  }
+  .status-na {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium;
+    background-color: #F1F5F9;
+    color: #64748B;
+  }
+  .status-pending {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium;
+    background-color: #FEF3C7;
+    color: #92400E;
+  }
+
+  /* Section header accent */
+  .section-header {
+    @apply flex items-center gap-3 px-4 py-2.5 font-semibold text-xs tracking-widest uppercase;
+    background-color: #000033;
+    color: #E2E8F0;
+    letter-spacing: 0.08em;
+  }
+
+  /* Checklist row */
+  .qa-row {
+    @apply flex items-start border-b border-border transition-colors duration-150;
+  }
+  .qa-row:hover {
+    background-color: #F8FAFC;
+  }
+  .qa-row.active-item {
+    border-left: 3px solid #E8321A;
+  }
+
+  /* Reviewer badge */
+  .reviewer-badge {
+    @apply inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Progress bar */
+  .progress-bar-track {
+    @apply h-1 w-full rounded-full overflow-hidden;
+    background-color: #E2E8F0;
+  }
+  .progress-bar-fill {
+    @apply h-full rounded-full transition-all duration-300 ease-out;
+    background-color: #E8321A;
   }
 }

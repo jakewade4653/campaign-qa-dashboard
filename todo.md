@@ -1,0 +1,20 @@
+# Campaign QA Dashboard — TODO
+
+- [x] Initialize project scaffold (web-static → web-db-user)
+- [x] Upload OMD and MSC logos to static assets
+- [x] Define brand tokens in index.css (OMD Red, MSC Navy, MSC blues)
+- [x] Set DM Sans + DM Mono fonts
+- [x] Define database schema (qa_workflows, workflow_logs, users)
+- [x] Run db:push to create tables
+- [x] Write server/db.ts with CRUD helpers
+- [x] Write server/routers.ts with tRPC procedures (workflows + logs)
+- [x] Write checklist definitions for all 5 launch types
+- [x] Build App.tsx with routes (Dashboard, New Workflow, Workflow Detail, Log)
+- [x] Build DashboardLayout with OMD/MSC branding sidebar
+- [x] Build Dashboard home page (workflow list, stats, filters)
+- [x] Build New Workflow wizard (step 1: launch type, step 2: metadata, step 3: ad set groups)
+- [x] Build Workflow Detail page (checklist with per-section progress, reviewer columns)
+- [x] Build Sign-Off flow (role selector, sign-off confirmation)
+- [x] Build Workflow Log page (filterable activity history table)
+- [x] Write vitest tests for routers (10/10 passing)
+- [ ] Save checkpoint and deliver to user

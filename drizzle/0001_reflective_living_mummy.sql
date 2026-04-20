@@ -1,0 +1,41 @@
+CREATE TABLE `qa_workflows` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`campaignName` varchar(255) NOT NULL,
+	`client` varchar(100) NOT NULL DEFAULT 'MSC Cruises',
+	`platform` varchar(50) NOT NULL,
+	`launchType` varchar(50) NOT NULL,
+	`market` varchar(100),
+	`campaignId` varchar(100),
+	`flightStart` varchar(20),
+	`flightEnd` varchar(20),
+	`budgetAmount` varchar(50),
+	`budgetType` varchar(50),
+	`adSetGroups` text,
+	`notes` text,
+	`status` enum('in_progress','pending_qa1','pending_qa2','pending_md','approved','rejected') NOT NULL DEFAULT 'in_progress',
+	`builderSignOff` json,
+	`qa1SignOff` json,
+	`qa2SignOff` json,
+	`mdSignOff` json,
+	`checklistData` json,
+	`createdByName` varchar(100),
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	`completedAt` timestamp,
+	CONSTRAINT `qa_workflows_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `workflow_logs` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`workflowId` int NOT NULL,
+	`actorName` varchar(100) NOT NULL,
+	`actorRole` varchar(20) NOT NULL,
+	`action` varchar(50) NOT NULL,
+	`details` json,
+	`campaignName` varchar(255),
+	`client` varchar(100),
+	`platform` varchar(50),
+	`launchType` varchar(50),
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `workflow_logs_id` PRIMARY KEY(`id`)
+);
