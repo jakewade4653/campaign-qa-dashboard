@@ -17,4 +17,4 @@
 - [x] Build Sign-Off flow (role selector, sign-off confirmation)
 - [x] Build Workflow Log page (filterable activity history table)
 - [x] Write vitest tests for routers (10/10 passing)
-- [ ] Save checkpoint and deliver to user
+- [x] Save checkpoint and deliver to user

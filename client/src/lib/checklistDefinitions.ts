@@ -15,7 +15,7 @@ export type Platform =
   | "meta"
   | "google"
   | "dv360"
-  | "ttd"
+  | "yahoo"
   | "tiktok"
   | "pinterest"
   | "snapchat"
@@ -527,7 +527,7 @@ export const PLATFORM_LABELS: Record<Platform, string> = {
   meta: "Meta (Facebook / Instagram)",
   google: "Google Ads",
   dv360: "DV360",
-  ttd: "The Trade Desk",
+  yahoo: "Yahoo",
   tiktok: "TikTok",
   pinterest: "Pinterest",
   snapchat: "Snapchat",
