@@ -136,23 +136,20 @@ export default function WorkflowDetail() {
   }, [checklistData]);
 
   const handleToggle = (sectionId: string, itemId: string, currentStatus: CheckStatus) => {
-    if (!reviewerName.trim()) {
-      toast.error("Please enter your name before making changes");
-      return;
-    }
     const cycle: CheckStatus[] = ["pending", "pass", "fail", "na"];
     const next = cycle[(cycle.indexOf(currentStatus) + 1) % cycle.length];
+    const actor = reviewerName.trim() || "Reviewer";
     updateChecklistMutation.mutate({
       workflowId,
       sectionId,
       itemId,
       item: {
         status: next,
-        reviewer: reviewerName,
+        reviewer: actor,
         reviewerRole: activeRole,
         updatedAt: new Date().toISOString(),
       },
-      actorName: reviewerName,
+      actorName: actor,
       actorRole: activeRole,
     });
   };
@@ -326,17 +323,21 @@ export default function WorkflowDetail() {
 
       {/* Active reviewer selector */}
       <div
-        className="flex flex-wrap items-center gap-3 rounded border p-3"
-        style={{ borderColor: "#E5E7EB", backgroundColor: "#fff" }}
+        className="rounded border overflow-hidden"
+        style={{ borderColor: "#E8321A" }}
       >
-        <div className="flex items-center gap-2">
-          <Pen size={13} style={{ color: "#E8321A" }} />
-          <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#000033" }}>
-            Reviewing As
+        <div
+          className="flex items-center gap-2 px-4 py-2"
+          style={{ backgroundColor: "#E8321A" }}
+        >
+          <Pen size={13} className="text-white" />
+          <span className="text-xs font-bold uppercase tracking-widest text-white">
+            Who is reviewing? Fill in your name and role, then click any checklist item to mark it.
           </span>
         </div>
+        <div className="flex flex-wrap items-center gap-3 p-3" style={{ backgroundColor: "#fff" }}>
         <Select value={activeRole} onValueChange={(v) => setActiveRole(v as ReviewerRole)}>
-          <SelectTrigger className="h-8 text-sm w-48">
+          <SelectTrigger className="h-9 text-sm w-52">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -348,9 +349,12 @@ export default function WorkflowDetail() {
         <Input
           value={reviewerName}
           onChange={(e) => setReviewerName(e.target.value)}
-          placeholder="Your name"
-          className="h-8 text-sm w-44"
+          placeholder="Your name (optional)"
+          className="h-9 text-sm w-48"
         />
+        <div className="text-xs text-muted-foreground">
+          Click any item below to cycle: <span className="font-semibold text-amber-600">Pending</span> → <span className="font-semibold text-green-600">Pass</span> → <span className="font-semibold text-red-500">Fail</span> → <span className="font-semibold text-slate-500">N/A</span>
+        </div>
         <Button
           size="sm"
           onClick={() => setSignOffModal(true)}
@@ -361,6 +365,7 @@ export default function WorkflowDetail() {
           <Shield size={13} />
           Sign Off
         </Button>
+        </div>
       </div>
 
       {/* Checklist sections */}
