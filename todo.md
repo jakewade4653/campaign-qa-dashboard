@@ -18,3 +18,5 @@
 - [x] Build Workflow Log page (filterable activity history table)
 - [x] Write vitest tests for routers (10/10 passing)
 - [x] Save checkpoint and deliver to user
+- [x] Make checklist items more obviously clickable (larger buttons, pill-style status badges, visible hover)
+- [x] Add PDF export of a workflow checklist from the Workflow Detail page

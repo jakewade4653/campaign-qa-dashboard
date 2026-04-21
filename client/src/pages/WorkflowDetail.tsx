@@ -41,11 +41,37 @@ import {
   MessageSquare,
   Pen,
   Shield,
+  Download,
 } from "lucide-react";
 
 type CheckStatus = "pass" | "fail" | "na" | "pending";
 type ReviewerRole = "builder" | "qa1" | "qa2" | "md";
 
+// Pill-style status badges — clearly clickable
+const STATUS_PILL: Record<CheckStatus, React.ReactNode> = {
+  pass: (
+    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-300 select-none">
+      <CheckCircle2 size={12} /> Pass
+    </span>
+  ),
+  fail: (
+    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-300 select-none">
+      <XCircle size={12} /> Fail
+    </span>
+  ),
+  na: (
+    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 border border-slate-300 select-none">
+      <MinusCircle size={12} /> N/A
+    </span>
+  ),
+  pending: (
+    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-600 border border-amber-300 border-dashed select-none">
+      <Clock size={12} /> Pending
+    </span>
+  ),
+};
+
+// Small icon for per-adset-group grid cells
 const STATUS_ICON: Record<CheckStatus, React.ReactNode> = {
   pass: <CheckCircle2 size={15} className="text-green-600" />,
   fail: <XCircle size={15} className="text-red-500" />,
@@ -213,16 +239,144 @@ export default function WorkflowDetail() {
     md: workflow.mdSignOff as { name: string; timestamp: string } | null,
   };
 
+  const handleExportPDF = () => {
+    const printContent = document.getElementById("qa-checklist-print");
+    if (!printContent) return;
+    const win = window.open("", "_blank");
+    if (!win) {
+      toast.error("Popup blocked. Please allow popups for this site and try again.");
+      return;
+    }
+    win.document.write(`
+      <html>
+        <head>
+          <title>QA Checklist — ${workflow.campaignName}</title>
+          <style>
+            body { font-family: Arial, sans-serif; font-size: 12px; color: #000033; margin: 24px; }
+            h1 { font-size: 16px; margin-bottom: 4px; }
+            .meta { font-size: 11px; color: #64748B; margin-bottom: 16px; }
+            .section-header { background: #000033; color: white; padding: 6px 12px; font-size: 11px; font-weight: bold; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 16px; }
+            .item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 12px; border-bottom: 1px solid #F1F5F9; }
+            .item:nth-child(even) { background: #F8FAFC; }
+            .status { font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+            .pass { background: #DCFCE7; color: #166534; }
+            .fail { background: #FEE2E2; color: #991B1B; }
+            .na { background: #F1F5F9; color: #64748B; }
+            .pending { background: #FEF3C7; color: #92400E; }
+            .label { font-size: 12px; font-weight: 500; }
+            .desc { font-size: 10px; color: #64748B; }
+            .reviewer { font-size: 10px; color: #94A3B8; font-family: monospace; }
+            .note { font-size: 10px; background: #FEF3C7; color: #92400E; padding: 2px 6px; border-radius: 4px; margin-top: 2px; }
+            .signoffs { margin-top: 24px; border-top: 2px solid #000033; padding-top: 12px; }
+            .signoff-row { display: flex; gap: 24px; flex-wrap: wrap; }
+            .signoff-box { border: 1px solid #E5E7EB; padding: 8px 16px; border-radius: 4px; min-width: 140px; }
+            .signoff-role { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748B; }
+            .signoff-name { font-size: 12px; font-weight: 600; color: #000033; margin-top: 2px; }
+            .signoff-date { font-size: 10px; color: #94A3B8; font-family: monospace; }
+            @media print { body { margin: 0; } }
+          </style>
+        </head>
+        <body>
+          ${printContent.innerHTML}
+        </body>
+      </html>
+    `);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); }, 400);
+  };
+
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-5">
-      {/* Back */}
-      <button
-        onClick={() => navigate("/")}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ChevronLeft size={14} />
-        Back to Dashboard
-      </button>
+      {/* Back + Export row */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ChevronLeft size={14} />
+          Back to Dashboard
+        </button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportPDF}
+          className="gap-1.5"
+        >
+          <Download size={13} />
+          Export PDF
+        </Button>
+      </div>
+
+      {/* Hidden print-friendly content for PDF export */}
+      <div id="qa-checklist-print" style={{ display: "none" }}>
+        <h1>{workflow.campaignName}</h1>
+        <div className="meta">
+          {workflow.client} &middot; {platformLabel} &middot; {launchLabel}
+          {workflow.market ? ` · ${workflow.market}` : ""}
+          {workflow.flightStart ? ` · ${workflow.flightStart} → ${workflow.flightEnd}` : ""}
+          {workflow.budgetAmount ? ` · ${workflow.budgetAmount} (${workflow.budgetType})` : ""}
+          &nbsp;&middot;&nbsp;{overallProgress}% complete &middot; Exported {new Date().toLocaleDateString()}
+        </div>
+        {sections.map((section) => (
+          <div key={section.id}>
+            <div className="section-header">{section.title}</div>
+            {section.items.map((item) => {
+              if (item.perAdSetGroup && adSetGroups.length > 0) {
+                return adSetGroups.map((group) => {
+                  const itemId = `${item.id}__${group.replace(/\s+/g, "_")}`;
+                  const current = checklistData[section.id]?.[itemId];
+                  const status = current?.status ?? "pending";
+                  return (
+                    <div key={itemId} className="item">
+                      <span className={`status ${status}`}>{status.toUpperCase()}</span>
+                      <div>
+                        <div className="label">{item.label} <span style={{color:"#94A3B8"}}>({group})</span></div>
+                        {current?.reviewer && <div className="reviewer">{current.reviewer} · {current.reviewerRole?.toUpperCase()}</div>}
+                        {current?.note && <div className="note">Note: {current.note}</div>}
+                      </div>
+                    </div>
+                  );
+                });
+              }
+              const current = checklistData[section.id]?.[item.id];
+              const status = current?.status ?? "pending";
+              return (
+                <div key={item.id} className="item">
+                  <span className={`status ${status}`}>{status.toUpperCase()}</span>
+                  <div>
+                    <div className="label">{item.label}</div>
+                    <div className="desc">{item.description}</div>
+                    {current?.reviewer && <div className="reviewer">{current.reviewer} · {current.reviewerRole?.toUpperCase()}</div>}
+                    {current?.note && <div className="note">Note: {current.note}</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+        <div className="signoffs">
+          <div style={{fontWeight:"bold",marginBottom:"8px",fontSize:"11px",textTransform:"uppercase",letterSpacing:"0.08em"}}>Reviewer Sign-Offs</div>
+          <div className="signoff-row">
+            {REVIEWER_ORDER.map((role) => {
+              const so = signOffs[role];
+              return (
+                <div key={role} className="signoff-box">
+                  <div className="signoff-role">{REVIEWER_LABELS[role]}</div>
+                  {so ? (
+                    <>
+                      <div className="signoff-name">{so.name}</div>
+                      <div className="signoff-date">{new Date(so.timestamp).toLocaleString()}</div>
+                    </>
+                  ) : (
+                    <div className="signoff-name" style={{color:"#94A3B8"}}>Pending</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       {/* Campaign header */}
       <div
@@ -476,10 +630,10 @@ export default function WorkflowDetail() {
                               <div key={group} className="flex flex-col items-center gap-1">
                                 <button
                                   onClick={() => handleToggle(section.id, itemId, status)}
-                                  className="p-1 rounded hover:bg-gray-100 transition-colors"
-                                  title={`Toggle ${item.label} for ${group}`}
+                                  className="rounded-full transition-all duration-150 hover:scale-105 hover:shadow-sm active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#E8321A] focus:ring-offset-1"
+                                  title={`Click to cycle: Pending → Pass → Fail → N/A (${group})`}
                                 >
-                                  {STATUS_ICON[status]}
+                                  {STATUS_PILL[status]}
                                 </button>
                                 {current?.note && (
                                   <div
@@ -516,17 +670,22 @@ export default function WorkflowDetail() {
                       <div
                         key={item.id}
                         className={cn(
-                          "flex items-start gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors",
-                          status === "pass" ? "border-l-2 border-l-green-400" :
-                          status === "fail" ? "border-l-2 border-l-red-400" : ""
+                          "flex items-center gap-3 px-4 py-3 transition-colors group",
+                          status === "pass" ? "bg-green-50/50 border-l-4 border-l-green-400" :
+                          status === "fail" ? "bg-red-50/50 border-l-4 border-l-red-400" :
+                          status === "na" ? "bg-slate-50/50 border-l-4 border-l-slate-300" :
+                          "border-l-4 border-l-transparent hover:bg-gray-50"
                         )}
                       >
+                        {/* Clickable status pill */}
                         <button
                           onClick={() => handleToggle(section.id, item.id, status)}
-                          className="mt-0.5 p-0.5 rounded hover:bg-gray-100 transition-colors shrink-0"
+                          className="shrink-0 rounded-full transition-all duration-150 hover:scale-105 hover:shadow-sm active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#E8321A] focus:ring-offset-1"
+                          title="Click to cycle: Pending → Pass → Fail → N/A"
                         >
-                          {STATUS_ICON[status]}
+                          {STATUS_PILL[status]}
                         </button>
+                        {/* Label + meta */}
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium" style={{ color: "#000033" }}>
                             {item.label}
@@ -551,14 +710,16 @@ export default function WorkflowDetail() {
                             </div>
                           )}
                         </div>
+                        {/* Note button */}
                         <button
                           onClick={() => {
                             setNoteModal({ sectionId: section.id, itemId: item.id, currentNote: current?.note ?? "" });
                             setNoteText(current?.note ?? "");
                           }}
-                          className="p-1 rounded hover:bg-gray-100 text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                          className="p-1.5 rounded hover:bg-gray-200 text-muted-foreground hover:text-foreground transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                          title="Add note"
                         >
-                          <MessageSquare size={12} />
+                          <MessageSquare size={13} />
                         </button>
                       </div>
                     );
