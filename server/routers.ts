@@ -77,12 +77,11 @@ export const appRouter = router({
         createdByName: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        const result = await createWorkflow({
+        const newId = await createWorkflow({
           ...input,
           status: "in_progress",
           checklistData: {},
         });
-        const newId = Number((result as any).insertId);
         await addWorkflowLog({
           workflowId: newId,
           actorName: input.createdByName ?? "Unknown",

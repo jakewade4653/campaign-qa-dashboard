@@ -4,7 +4,7 @@ import type { TrpcContext } from "./_core/context";
 
 // Mock the db module
 vi.mock("./db", () => ({
-  createWorkflow: vi.fn().mockResolvedValue({ insertId: 42 }),
+  createWorkflow: vi.fn().mockResolvedValue(42),
   getWorkflows: vi.fn().mockResolvedValue([
     {
       id: 1,

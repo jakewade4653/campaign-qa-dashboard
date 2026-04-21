@@ -98,10 +98,12 @@ export async function getUserByOpenId(openId: string) {
 }
 
 // ─── QA Workflows ─────────────────────────────────────────────────────────────
-export async function createWorkflow(data: InsertQaWorkflow) {
+export async function createWorkflow(data: InsertQaWorkflow): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return await db.insert(qaWorkflows).values(data);
+  // drizzle mysql2 returns an array-like object: result[0] is the ResultSetHeader
+  const result = await db.insert(qaWorkflows).values(data);
+  return (result as any)[0]?.insertId ?? 0;
 }
 
 export async function getWorkflows(filters?: {
