@@ -15,6 +15,13 @@
       "when": 1776709376094,
       "tag": "0001_reflective_living_mummy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1776876593711,
+      "tag": "0002_dark_harrier",
+      "breakpoints": true
     }
   ]
 }

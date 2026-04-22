@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 import {
   PlusCircle,
   Search,
@@ -11,6 +12,8 @@ import {
   TrendingUp,
   ChevronRight,
   RefreshCw,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,8 +53,21 @@ export default function Dashboard() {
   const [filterLaunchType, setFilterLaunchType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterPlatform, setFilterPlatform] = useState<string>("all");
+  const [showArchived, setShowArchived] = useState(false);
 
-  const { data: workflows = [], isLoading, refetch } = trpc.workflows.list.useQuery({});
+  const utils = trpc.useUtils();
+
+  const { data: workflows = [], isLoading, refetch } = trpc.workflows.list.useQuery(
+    { showArchived }
+  );
+
+  const archiveMutation = trpc.workflows.archive.useMutation({
+    onSuccess: (_, vars) => {
+      toast.success(vars.archive ? "Workflow archived" : "Workflow restored");
+      utils.workflows.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   const filtered = useMemo(() => {
     return workflows.filter((wf) => {
@@ -67,14 +83,14 @@ export default function Dashboard() {
     });
   }, [workflows, search, filterLaunchType, filterStatus, filterPlatform]);
 
-  // Stats
   const stats = useMemo(() => {
-    const total = workflows.length;
-    const approved = workflows.filter((w) => w.status === "approved").length;
-    const inProgress = workflows.filter((w) =>
+    const active = workflows.filter((w) => w.archived === "0");
+    const total = active.length;
+    const approved = active.filter((w) => w.status === "approved").length;
+    const inProgress = active.filter((w) =>
       ["in_progress", "pending_qa1", "pending_qa2", "pending_md"].includes(w.status)
     ).length;
-    const rejected = workflows.filter((w) => w.status === "rejected").length;
+    const rejected = active.filter((w) => w.status === "rejected").length;
     return { total, approved, inProgress, rejected };
   }, [workflows]);
 
@@ -119,7 +135,7 @@ export default function Dashboard() {
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total Workflows", value: stats.total, icon: TrendingUp, color: "#000033" },
+          { label: "Active Workflows", value: stats.total, icon: TrendingUp, color: "#000033" },
           { label: "In Progress", value: stats.inProgress, icon: Clock, color: "#F59E0B" },
           { label: "Approved", value: stats.approved, icon: CheckCircle2, color: "#22C55E" },
           { label: "Rejected", value: stats.rejected, icon: AlertCircle, color: "#E8321A" },
@@ -190,6 +206,19 @@ export default function Dashboard() {
             ))}
           </SelectContent>
         </Select>
+        {/* Archive toggle */}
+        <button
+          onClick={() => setShowArchived(!showArchived)}
+          className={cn(
+            "flex items-center gap-1.5 px-3 h-8 rounded border text-xs font-medium transition-all",
+            showArchived
+              ? "border-amber-400 bg-amber-50 text-amber-700"
+              : "border-gray-200 bg-white text-muted-foreground hover:border-gray-300 hover:text-foreground"
+          )}
+        >
+          <Archive size={12} />
+          {showArchived ? "Showing Archived" : "Show Archived"}
+        </button>
       </div>
 
       {/* Workflow table */}
@@ -200,7 +229,7 @@ export default function Dashboard() {
           style={{
             backgroundColor: "#000033",
             color: "rgba(255,255,255,0.7)",
-            gridTemplateColumns: "2fr 1fr 1fr 1fr 80px 100px 32px",
+            gridTemplateColumns: "2fr 1fr 1fr 1fr 80px 100px 60px",
             letterSpacing: "0.07em",
           }}
         >
@@ -219,13 +248,17 @@ export default function Dashboard() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center">
-            <div className="text-sm text-muted-foreground mb-3">No workflows found</div>
-            <Link href="/new">
-              <Button size="sm" style={{ backgroundColor: "#E8321A", color: "white" }}>
-                <PlusCircle size={13} className="mr-1.5" />
-                Create your first workflow
-              </Button>
-            </Link>
+            <div className="text-sm text-muted-foreground mb-3">
+              {showArchived ? "No archived workflows" : "No workflows found"}
+            </div>
+            {!showArchived && (
+              <Link href="/new">
+                <Button size="sm" style={{ backgroundColor: "#E8321A", color: "white" }}>
+                  <PlusCircle size={13} className="mr-1.5" />
+                  Create your first workflow
+                </Button>
+              </Link>
+            )}
           </div>
         ) : (
           <div className="divide-y" style={{ borderColor: "#F1F5F9" }}>
@@ -236,6 +269,7 @@ export default function Dashboard() {
               const launchColor = LAUNCH_TYPE_COLORS[wf.launchType as LaunchType] ?? "bg-gray-200 text-gray-700";
               const statusColor = STATUS_COLORS[wf.status] ?? "bg-gray-100 text-gray-700";
               const statusLabel = STATUS_LABELS[wf.status] ?? wf.status;
+              const isArchived = wf.archived === "1";
               const createdDate = new Date(wf.createdAt).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -243,15 +277,26 @@ export default function Dashboard() {
               });
 
               return (
-                <Link key={wf.id} href={`/workflow/${wf.id}`}>
-                  <div
-                    className="grid items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
-                    style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 80px 100px 32px" }}
-                  >
-                    {/* Campaign name */}
-                    <div>
-                      <div className="text-sm font-medium" style={{ color: "#000033" }}>
-                        {wf.campaignName}
+                <div
+                  key={wf.id}
+                  className={cn(
+                    "grid items-center px-4 py-3 transition-colors",
+                    isArchived ? "bg-gray-50 opacity-70" : "hover:bg-gray-50"
+                  )}
+                  style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 80px 100px 60px" }}
+                >
+                  {/* Campaign name — clickable */}
+                  <Link href={`/workflow/${wf.id}`}>
+                    <div className="cursor-pointer">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-medium hover:underline" style={{ color: "#000033" }}>
+                          {wf.campaignName}
+                        </span>
+                        {isArchived && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">
+                            Archived
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
                         {wf.client}{wf.market ? ` · ${wf.market}` : ""}
@@ -262,49 +307,66 @@ export default function Dashboard() {
                         ) : null}
                       </div>
                     </div>
+                  </Link>
 
-                    {/* Launch type */}
-                    <div>
-                      <span className={cn("inline-flex px-2 py-0.5 rounded text-xs font-medium", launchColor)}>
-                        {launchLabel}
-                      </span>
-                    </div>
-
-                    {/* Platform */}
-                    <div className="text-sm text-muted-foreground">{platformLabel}</div>
-
-                    {/* Status */}
-                    <div>
-                      <span className={cn("inline-flex px-2 py-0.5 rounded text-xs font-medium", statusColor)}>
-                        {statusLabel}
-                      </span>
-                    </div>
-
-                    {/* Progress */}
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${pct}%`,
-                            backgroundColor: pct === 100 ? "#22C55E" : "#E8321A",
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs font-mono text-muted-foreground w-7 text-right">
-                        {pct}%
-                      </span>
-                    </div>
-
-                    {/* Date */}
-                    <div className="text-xs text-muted-foreground font-mono">{createdDate}</div>
-
-                    {/* Arrow */}
-                    <div className="flex justify-end">
-                      <ChevronRight size={14} className="text-muted-foreground" />
-                    </div>
+                  {/* Launch type */}
+                  <div>
+                    <span className={cn("inline-flex px-2 py-0.5 rounded text-xs font-medium", launchColor)}>
+                      {launchLabel}
+                    </span>
                   </div>
-                </Link>
+
+                  {/* Platform */}
+                  <div className="text-sm text-muted-foreground">{platformLabel}</div>
+
+                  {/* Status */}
+                  <div>
+                    <span className={cn("inline-flex px-2 py-0.5 rounded text-xs font-medium", statusColor)}>
+                      {statusLabel}
+                    </span>
+                  </div>
+
+                  {/* Progress */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${pct}%`,
+                          backgroundColor: pct === 100 ? "#22C55E" : "#E8321A",
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs font-mono text-muted-foreground w-7 text-right">
+                      {pct}%
+                    </span>
+                  </div>
+
+                  {/* Date */}
+                  <div className="text-xs text-muted-foreground font-mono">{createdDate}</div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        archiveMutation.mutate({ workflowId: wf.id, archive: !isArchived });
+                      }}
+                      title={isArchived ? "Restore workflow" : "Archive workflow"}
+                      className={cn(
+                        "p-1.5 rounded transition-colors",
+                        isArchived
+                          ? "text-amber-600 hover:bg-amber-50"
+                          : "text-muted-foreground hover:bg-gray-100 hover:text-amber-600"
+                      )}
+                    >
+                      {isArchived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+                    </button>
+                    <Link href={`/workflow/${wf.id}`}>
+                      <ChevronRight size={14} className="text-muted-foreground" />
+                    </Link>
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -314,6 +376,7 @@ export default function Dashboard() {
       {filtered.length > 0 && (
         <div className="text-xs text-muted-foreground text-right">
           Showing {filtered.length} of {workflows.length} workflows
+          {showArchived && " (including archived)"}
         </div>
       )}
     </div>

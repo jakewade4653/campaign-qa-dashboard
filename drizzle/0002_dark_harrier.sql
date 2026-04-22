@@ -1,0 +1,1 @@
+ALTER TABLE `qa_workflows` ADD `archived` enum('0','1') DEFAULT '0' NOT NULL;

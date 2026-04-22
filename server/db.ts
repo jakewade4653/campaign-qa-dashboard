@@ -111,10 +111,13 @@ export async function getWorkflows(filters?: {
   platform?: string;
   launchType?: string;
   status?: string;
+  showArchived?: boolean;
 }) {
   const db = await getDb();
   if (!db) return [];
   const conditions = [];
+  // By default exclude archived; only include them when explicitly requested
+  if (!filters?.showArchived) conditions.push(eq(qaWorkflows.archived, "0"));
   if (filters?.client) conditions.push(like(qaWorkflows.client, `%${filters.client}%`));
   if (filters?.platform) conditions.push(eq(qaWorkflows.platform, filters.platform));
   if (filters?.launchType) conditions.push(eq(qaWorkflows.launchType, filters.launchType));

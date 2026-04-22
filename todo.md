@@ -20,3 +20,4 @@
 - [x] Save checkpoint and deliver to user
 - [x] Make checklist items more obviously clickable (larger buttons, pill-style status badges, visible hover)
 - [x] Add PDF export of a workflow checklist from the Workflow Detail page
+- [x] Add archive/unarchive workflow feature (DB column, server procedure, dashboard toggle)

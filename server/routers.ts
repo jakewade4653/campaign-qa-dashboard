@@ -47,6 +47,7 @@ export const appRouter = router({
         platform: z.string().optional(),
         launchType: z.string().optional(),
         status: z.string().optional(),
+        showArchived: z.boolean().optional(),
       }).optional())
       .query(async ({ input }) => {
         return await getWorkflows(input ?? {});
@@ -181,6 +182,30 @@ export const appRouter = router({
           actorRole: input.actorRole,
           action: "status_changed",
           details: { fromStatus: wf.status, toStatus: input.status, reason: input.reason },
+          campaignName: wf.campaignName,
+          client: wf.client,
+          platform: wf.platform,
+          launchType: wf.launchType,
+        });
+        return { success: true };
+      }),
+
+    archive: publicProcedure
+      .input(z.object({
+        workflowId: z.number(),
+        archive: z.boolean(),
+        actorName: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const wf = await getWorkflowById(input.workflowId);
+        if (!wf) throw new Error("Workflow not found");
+        await updateWorkflow(input.workflowId, { archived: input.archive ? "1" : "0" });
+        await addWorkflowLog({
+          workflowId: input.workflowId,
+          actorName: input.actorName ?? "User",
+          actorRole: "builder",
+          action: input.archive ? "workflow_archived" : "workflow_unarchived",
+          details: { archived: input.archive },
           campaignName: wf.campaignName,
           client: wf.client,
           platform: wf.platform,

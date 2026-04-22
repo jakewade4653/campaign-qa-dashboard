@@ -27,6 +27,7 @@ vi.mock("./db", () => ({
     platform: "meta",
     launchType: "campaign_launch",
     status: "in_progress",
+    archived: "0",
     checklistData: {},
     builderSignOff: null,
     qa1SignOff: null,
@@ -159,6 +160,28 @@ describe("logs.list", () => {
     expect(result).toHaveLength(1);
     expect(result[0].action).toBe("workflow_created");
     expect(result[0].actorName).toBe("Jake");
+  });
+});
+
+describe("workflows.archive", () => {
+  it("archives a workflow", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    const result = await caller.workflows.archive({
+      workflowId: 1,
+      archive: true,
+      actorName: "Jake",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("unarchives a workflow", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    const result = await caller.workflows.archive({
+      workflowId: 1,
+      archive: false,
+      actorName: "Jake",
+    });
+    expect(result.success).toBe(true);
   });
 });
 

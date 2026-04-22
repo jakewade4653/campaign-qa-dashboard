@@ -85,6 +85,7 @@ export const qaWorkflows = mysqlTable("qa_workflows", {
   mdSignOff: json("mdSignOff"),
   checklistData: json("checklistData"),
   createdByName: varchar("createdByName", { length: 100 }),
+  archived: mysqlEnum("archived", ["0", "1"]).default("0").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   completedAt: timestamp("completedAt"),
