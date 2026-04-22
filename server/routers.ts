@@ -76,6 +76,7 @@ export const appRouter = router({
         adSetGroups: z.string().optional(),
         notes: z.string().optional(),
         createdByName: z.string().optional(),
+        deadline: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         const newId = await createWorkflow({
@@ -182,6 +183,30 @@ export const appRouter = router({
           actorRole: input.actorRole,
           action: "status_changed",
           details: { fromStatus: wf.status, toStatus: input.status, reason: input.reason },
+          campaignName: wf.campaignName,
+          client: wf.client,
+          platform: wf.platform,
+          launchType: wf.launchType,
+        });
+        return { success: true };
+      }),
+
+    updateDeadline: publicProcedure
+      .input(z.object({
+        workflowId: z.number(),
+        deadline: z.string().nullable(),
+        actorName: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const wf = await getWorkflowById(input.workflowId);
+        if (!wf) throw new Error("Workflow not found");
+        await updateWorkflow(input.workflowId, { deadline: input.deadline ?? undefined });
+        await addWorkflowLog({
+          workflowId: input.workflowId,
+          actorName: input.actorName ?? "User",
+          actorRole: "builder",
+          action: "deadline_updated",
+          details: { deadline: input.deadline },
           campaignName: wf.campaignName,
           client: wf.client,
           platform: wf.platform,

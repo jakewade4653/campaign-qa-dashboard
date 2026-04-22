@@ -85,6 +85,7 @@ export const qaWorkflows = mysqlTable("qa_workflows", {
   mdSignOff: json("mdSignOff"),
   checklistData: json("checklistData"),
   createdByName: varchar("createdByName", { length: 100 }),
+  deadline: varchar("deadline", { length: 20 }), // ISO date string YYYY-MM-DD
   archived: mysqlEnum("archived", ["0", "1"]).default("0").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

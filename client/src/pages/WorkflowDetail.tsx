@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
 import { useAppAuth } from "@/contexts/AppAuthContext";
+import { getDeadlineStatus, formatDeadline, daysUntilDeadline, DEADLINE_STYLES } from "@/lib/deadlineUtils";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ import {
   Pen,
   Shield,
   Download,
+  CalendarClock,
 } from "lucide-react";
 
 type CheckStatus = "pass" | "fail" | "na" | "pending";
@@ -116,6 +118,8 @@ export default function WorkflowDetail() {
   const [noteModal, setNoteModal] = useState<{ sectionId: string; itemId: string; currentNote: string } | null>(null);
   const [noteText, setNoteText] = useState("");
   const [signOffModal, setSignOffModal] = useState(false);
+  const [editingDeadline, setEditingDeadline] = useState(false);
+  const [deadlineInput, setDeadlineInput] = useState("");
 
   const utils = trpc.useUtils();
 
@@ -123,6 +127,15 @@ export default function WorkflowDetail() {
     { id: workflowId },
     { enabled: !!workflowId }
   );
+
+  const updateDeadlineMutation = trpc.workflows.updateDeadline.useMutation({
+    onSuccess: () => {
+      utils.workflows.byId.invalidate({ id: workflowId });
+      setEditingDeadline(false);
+      toast.success("Deadline updated");
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   const updateChecklistMutation = trpc.workflows.updateChecklist.useMutation({
     onSuccess: () => utils.workflows.byId.invalidate({ id: workflowId }),
@@ -413,6 +426,64 @@ export default function WorkflowDetail() {
               )}
               {workflow.budgetAmount && (
                 <><span>·</span><span>{workflow.budgetAmount} ({workflow.budgetType})</span></>
+              )}
+            </div>
+            {/* Deadline */}
+            <div className="flex items-center gap-2 mt-2">
+              {!editingDeadline ? (
+                <>
+                  {workflow.deadline ? (() => {
+                    const ds = getDeadlineStatus(workflow.deadline);
+                    const style = DEADLINE_STYLES[ds];
+                    const days = daysUntilDeadline(workflow.deadline);
+                    return (
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-semibold"
+                        style={{ backgroundColor: style.bg, color: style.text }}
+                      >
+                        <CalendarClock size={11} />
+                        {style.label} · {formatDeadline(workflow.deadline)}
+                        {days !== null && days >= 0 && (
+                          <span className="opacity-70">({days === 0 ? "today" : `${days}d`})</span>
+                        )}
+                        {days !== null && days < 0 && (
+                          <span className="opacity-70">({Math.abs(days)}d ago)</span>
+                        )}
+                      </span>
+                    );
+                  })() : (
+                    <span className="text-xs text-muted-foreground">No deadline set</span>
+                  )}
+                  <button
+                    onClick={() => { setDeadlineInput(workflow.deadline ?? ""); setEditingDeadline(true); }}
+                    className="text-xs text-muted-foreground hover:text-foreground underline transition-colors"
+                  >
+                    {workflow.deadline ? "Edit" : "Set deadline"}
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={deadlineInput}
+                    onChange={(e) => setDeadlineInput(e.target.value)}
+                    className="h-7 text-xs border rounded px-2"
+                    style={{ borderColor: "#E5E7EB" }}
+                  />
+                  <button
+                    onClick={() => updateDeadlineMutation.mutate({ workflowId, deadline: deadlineInput || null, actorName: reviewerName || session?.name })}
+                    className="text-xs px-2 py-1 rounded text-white"
+                    style={{ backgroundColor: "#E8321A" }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditingDeadline(false)}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Cancel
+                  </button>
+                </div>
               )}
             </div>
           </div>

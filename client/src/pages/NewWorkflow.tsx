@@ -45,6 +45,7 @@ export default function NewWorkflow() {
   const [flightEnd, setFlightEnd] = useState("");
   const [budgetAmount, setBudgetAmount] = useState("");
   const [budgetType, setBudgetType] = useState("");
+  const [deadline, setDeadline] = useState("");
   const [notes, setNotes] = useState("");
 
   // Step 3
@@ -81,6 +82,7 @@ export default function NewWorkflow() {
       adSetGroups: needsAdSetGroups ? JSON.stringify(adSetGroups) : undefined,
       notes: notes || undefined,
       createdByName: creatorName || "Builder",
+      deadline: deadline || undefined,
     });
   };
 
@@ -310,17 +312,33 @@ export default function NewWorkflow() {
                 </div>
               </>
             )}
-            <div className="sm:col-span-2">
-              <Label className="text-xs font-semibold" style={{ color: "#000033" }}>
-                Notes
-              </Label>
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Any additional context for this workflow..."
-                className="mt-1.5 text-sm"
-                rows={3}
-              />
+            <div className="sm:col-span-2 space-y-4">
+              <div>
+                <Label className="text-xs font-semibold" style={{ color: "#000033" }}>
+                  QA Deadline
+                </Label>
+                <Input
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                  className="mt-1.5"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  The date by which this QA workflow must be completed and approved.
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs font-semibold" style={{ color: "#000033" }}>
+                  Notes
+                </Label>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Any additional context for this workflow..."
+                  className="mt-1.5 text-sm"
+                  rows={3}
+                />
+              </div>
             </div>
           </div>
           <div className="flex justify-between pt-2">
@@ -436,6 +454,7 @@ export default function NewWorkflow() {
               ["Market", market || "—"],
               ["Flight", flightStart && flightEnd ? `${flightStart} → ${flightEnd}` : "—"],
               ["Budget", budgetAmount ? `${budgetAmount} (${budgetType})` : "—"],
+              ["QA Deadline", deadline || "—"],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{label}</span>

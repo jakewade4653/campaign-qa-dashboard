@@ -33,6 +33,7 @@ import {
 } from "@/lib/checklistDefinitions";
 import type { LaunchType, Platform } from "@/lib/checklistDefinitions";
 import { cn } from "@/lib/utils";
+import { getDeadlineStatus, formatDeadline, DEADLINE_STYLES } from "@/lib/deadlineUtils";
 
 function getCompletionPct(checklistData: unknown): number {
   if (!checklistData || typeof checklistData !== "object") return 0;
@@ -229,7 +230,7 @@ export default function Dashboard() {
           style={{
             backgroundColor: "#000033",
             color: "rgba(255,255,255,0.7)",
-            gridTemplateColumns: "2fr 1fr 1fr 1fr 80px 100px 60px",
+            gridTemplateColumns: "2fr 1fr 1fr 1fr 80px 110px 100px 60px",
             letterSpacing: "0.07em",
           }}
         >
@@ -239,6 +240,7 @@ export default function Dashboard() {
           <div>Status</div>
           <div>Progress</div>
           <div>Created</div>
+          <div>Deadline</div>
           <div />
         </div>
 
@@ -283,7 +285,7 @@ export default function Dashboard() {
                     "grid items-center px-4 py-3 transition-colors",
                     isArchived ? "bg-gray-50 opacity-70" : "hover:bg-gray-50"
                   )}
-                  style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 80px 100px 60px" }}
+                  style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 80px 110px 100px 60px" }}
                 >
                   {/* Campaign name — clickable */}
                   <Link href={`/workflow/${wf.id}`}>
@@ -344,6 +346,24 @@ export default function Dashboard() {
 
                   {/* Date */}
                   <div className="text-xs text-muted-foreground font-mono">{createdDate}</div>
+
+                  {/* Deadline */}
+                  <div>
+                    {wf.deadline ? (() => {
+                      const ds = getDeadlineStatus(wf.deadline);
+                      const style = DEADLINE_STYLES[ds];
+                      return (
+                        <span
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
+                          style={{ backgroundColor: style.bg, color: style.text }}
+                        >
+                          {style.label}
+                        </span>
+                      );
+                    })() : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </div>
 
                   {/* Actions */}
                   <div className="flex items-center justify-end gap-1">

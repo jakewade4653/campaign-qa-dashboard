@@ -23,3 +23,5 @@
 - [x] Add archive/unarchive workflow feature (DB column, server procedure, dashboard toggle)
 - [x] Add password gate screen (password: galveston) with name + role saved to localStorage session
 - [x] Auto-populate reviewer name and role from saved session in WorkflowDetail
+- [x] Add deadline field to workflow (DB column, New Workflow wizard, edit on detail page)
+- [x] Show deadline status on dashboard (overdue/due soon/on track badges) and workflow detail header
