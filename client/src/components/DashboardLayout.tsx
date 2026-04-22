@@ -7,8 +7,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  LogOut,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAppAuth } from "@/contexts/AppAuthContext";
+import { REVIEWER_LABELS } from "@/lib/checklistDefinitions";
 
 const OMD_LOGO = "/manus-storage/OMDLogo_8cc3ac67.svg";
 const MSC_LOGO = "/manus-storage/MSCCruisesUSA-BlueLogo_5e8365c6.png";
@@ -27,6 +31,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { session, logout } = useAppAuth();
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -103,14 +108,43 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           })}
         </nav>
 
-        {!collapsed && (
-          <div
-            className="px-4 py-3 text-xs font-mono"
-            style={{ color: "rgba(255,255,255,0.25)", borderTop: "1px solid rgba(255,255,255,0.08)" }}
+        {/* User info + logout */}
+        <div
+          className="px-3 py-3 space-y-2"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+        >
+          {!collapsed && session && (
+            <div
+              className="flex items-center gap-2 px-2 py-2 rounded"
+              style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
+            >
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
+                style={{ backgroundColor: "#E8321A", color: "white" }}
+              >
+                {session.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-medium text-white truncate">{session.name}</div>
+                <div className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
+                  {REVIEWER_LABELS[session.role]}
+                </div>
+              </div>
+            </div>
+          )}
+          <button
+            onClick={logout}
+            className={cn(
+              "flex items-center gap-2 w-full px-3 py-2 rounded text-xs transition-colors",
+              collapsed ? "justify-center" : "",
+              "text-white/50 hover:text-white hover:bg-white/5"
+            )}
+            title="Sign out"
           >
-            v1.0 · Jump450 / OMD
-          </div>
-        )}
+            <LogOut size={13} className="shrink-0" />
+            {!collapsed && <span>Sign Out</span>}
+          </button>
+        </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -138,6 +172,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {session && (
+              <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
+                <User size={12} />
+                <span className="font-medium" style={{ color: "#000033" }}>{session.name}</span>
+                <span className="text-gray-300">·</span>
+                <span>{REVIEWER_LABELS[session.role]}</span>
+              </div>
+            )}
             <img src={MSC_LOGO} alt="MSC Cruises" className="h-7 w-auto hidden sm:block" />
           </div>
         </header>

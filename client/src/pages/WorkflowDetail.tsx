@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
+import { useAppAuth } from "@/contexts/AppAuthContext";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -105,9 +106,12 @@ export default function WorkflowDetail() {
   const params = useParams<{ id: string }>();
   const workflowId = parseInt(params.id ?? "0", 10);
   const [, navigate] = useLocation();
+  const { session } = useAppAuth();
 
-  const [activeRole, setActiveRole] = useState<ReviewerRole>("builder");
-  const [reviewerName, setReviewerName] = useState("");
+  const [activeRole, setActiveRole] = useState<ReviewerRole>(
+    (session?.role as ReviewerRole) ?? "builder"
+  );
+  const [reviewerName, setReviewerName] = useState(session?.name ?? "");
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [noteModal, setNoteModal] = useState<{ sectionId: string; itemId: string; currentNote: string } | null>(null);
   const [noteText, setNoteText] = useState("");
