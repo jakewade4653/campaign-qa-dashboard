@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { REVIEWER_LABELS } from "@/lib/checklistDefinitions";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { LogIn } from "lucide-react";
 
 const OMD_LOGO = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663468974796/HlLvhxKabvpxZiHm.svg";
 const MSC_LOGO = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663468974796/TVmlnSTFOrrjIMNx.png";
@@ -26,10 +26,7 @@ export default function Login() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<ReviewerRole>("builder");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [shaking, setShaking] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,16 +38,10 @@ export default function Login() {
       setError("Please enter a valid email address.");
       return;
     }
-    const ok = login(password, name, role, email);
+    const ok = login(name, role, email);
     if (ok) {
       // Save email to DB so server can route notifications
       upsertEmail.mutate({ name: name.trim(), email: email.trim(), role });
-    }
-    if (!ok) {
-      setError("Incorrect password. Please try again.");
-      setShaking(true);
-      setTimeout(() => setShaking(false), 500);
-      setPassword("");
     }
   };
 
@@ -60,9 +51,7 @@ export default function Login() {
       style={{ backgroundColor: "#000033" }}
     >
       {/* Card */}
-      <div
-        className={`w-full max-w-sm bg-white rounded-lg overflow-hidden shadow-2xl transition-transform ${shaking ? "animate-shake" : ""}`}
-      >
+      <div className="w-full max-w-sm bg-white rounded-lg overflow-hidden shadow-2xl">
         {/* Header strip */}
         <div
           className="px-6 py-5 flex items-center justify-between"
@@ -129,28 +118,6 @@ export default function Login() {
               </Select>
             </div>
 
-            <div>
-              <Label className="text-xs font-semibold" style={{ color: "#000033" }}>
-                Password
-              </Label>
-              <div className="relative mt-1.5">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                  placeholder="Enter password"
-                  className="h-9 text-sm pr-9"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              </div>
-            </div>
-
             {error && (
               <div
                 className="text-xs px-3 py-2 rounded"
@@ -166,7 +133,7 @@ export default function Login() {
               style={{ backgroundColor: "#E8321A", borderColor: "#E8321A" }}
             >
               <LogIn size={14} />
-              Sign In
+              Access Dashboard
             </Button>
           </form>
         </div>
@@ -179,17 +146,6 @@ export default function Login() {
           Jump450 / OMD · MSC Cruises
         </div>
       </div>
-
-      <style>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          20% { transform: translateX(-8px); }
-          40% { transform: translateX(8px); }
-          60% { transform: translateX(-6px); }
-          80% { transform: translateX(6px); }
-        }
-        .animate-shake { animation: shake 0.4s ease-in-out; }
-      `}</style>
     </div>
   );
 }
