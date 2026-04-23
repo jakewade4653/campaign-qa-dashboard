@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 const SESSION_KEY = "qa_session";
+const PASSWORD = "galveston";
 
 export type ReviewerRole = "builder" | "qa1" | "qa2" | "md" | "ed";
 
@@ -13,7 +14,7 @@ export interface AppSession {
 
 interface AppAuthContextValue {
   session: AppSession | null;
-  login: (name: string, role: ReviewerRole, email: string) => boolean;
+  login: (password: string, name: string, role: ReviewerRole, email: string) => boolean;
   logout: () => void;
   updateSession: (name: string, role: ReviewerRole, email: string) => void;
 }
@@ -32,8 +33,8 @@ export function AppAuthProvider({ children }: { children: ReactNode }) {
     return null;
   });
 
-  const login = (name: string, role: ReviewerRole, email: string): boolean => {
-    if (!name.trim() || !email.trim()) return false;
+  const login = (password: string, name: string, role: ReviewerRole, email: string): boolean => {
+    if (password.trim().toLowerCase() !== PASSWORD) return false;
     const newSession: AppSession = { name: name.trim(), role, email: email.trim(), authenticated: true };
     setSession(newSession);
     localStorage.setItem(SESSION_KEY, JSON.stringify(newSession));
