@@ -15,8 +15,8 @@ import { cn } from "@/lib/utils";
 import { useAppAuth } from "@/contexts/AppAuthContext";
 import { REVIEWER_LABELS } from "@/lib/checklistDefinitions";
 
-const OMD_LOGO = "/manus-storage/OMDLogo_8cc3ac67.svg";
-const MSC_LOGO = "/manus-storage/MSCCruisesUSA-BlueLogo_5e8365c6.png";
+const OMD_LOGO = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663468974796/HlLvhxKabvpxZiHm.svg";
+const MSC_LOGO = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663468974796/TVmlnSTFOrrjIMNx.png";
 
 const NAV_ITEMS = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
