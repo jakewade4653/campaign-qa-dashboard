@@ -610,12 +610,10 @@ export default function WorkflowDetail() {
             size="sm"
             variant="outline"
             onClick={() => {
-              // Determine next role in the chain and pre-fill from team roster
-              const nextRoleMap: Record<string, string> = { builder: "qa1", qa1: "qa2", qa2: "md", md: "ed" };
-              const nextRole = nextRoleMap[activeRole];
-              const nextReviewer = nextRole ? teamEmails.find((m: { role: string }) => m.role === nextRole) : undefined;
-              setNotifyToName(nextReviewer?.name ?? "");
-              setNotifyToEmail(nextReviewer?.email ?? "");
+              // Default to MD (Jake) — the primary sign-off reviewer
+              const mdReviewer = teamEmails.find((m: { role: string }) => m.role === "md");
+              setNotifyToName(mdReviewer?.name ?? "");
+              setNotifyToEmail(mdReviewer?.email ?? "");
               setNotifyNote("");
               setNotifyModal(true);
             }}
@@ -888,7 +886,7 @@ export default function WorkflowDetail() {
           </DialogHeader>
           <div className="space-y-4 text-sm">
             <p className="text-muted-foreground text-xs">
-              Send a notification email to the next reviewer for <strong>{workflow?.campaignName}</strong>.
+              Send a notification email to the next QA reviewer for this campaign.
               Jenna Radomsky will be CC'd automatically.
             </p>
             <div>
