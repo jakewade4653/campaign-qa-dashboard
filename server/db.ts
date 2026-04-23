@@ -8,6 +8,7 @@ import {
   InsertQaWorkflow,
   InsertWorkflowLog,
   QaWorkflow,
+  teamEmails,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -141,6 +142,47 @@ export async function updateWorkflow(id: number, data: Partial<InsertQaWorkflow>
   await db.update(qaWorkflows).set(data).where(eq(qaWorkflows.id, id));
 }
 
+// ─── Archive / Deadline ──────────────────────────────────────────────────────
+export async function archiveWorkflow(id: number, archived: boolean): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(qaWorkflows).set({ archived: archived ? "1" : "0" }).where(eq(qaWorkflows.id, id));
+}
+
+export async function updateWorkflowDeadline(id: number, deadline: Date | string | null): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const deadlineStr = deadline instanceof Date ? deadline.toISOString().slice(0, 10) : deadline;
+  await db.update(qaWorkflows).set({ deadline: deadlineStr }).where(eq(qaWorkflows.id, id));
+}
+
+/**
+ * Returns active (non-archived, non-approved) workflows whose deadline falls
+ * within the next windowHours hours.
+ */
+export async function getWorkflowsDueForReminder(windowHours = 24): Promise<(typeof qaWorkflows.$inferSelect)[]> {
+  const db = await getDb();
+  if (!db) return [];
+  // deadline is stored as YYYY-MM-DD string; compare lexicographically
+  const now = new Date();
+  const windowEnd = new Date(now.getTime() + windowHours * 60 * 60 * 1000);
+  const todayStr = now.toISOString().slice(0, 10);
+  const windowEndStr = windowEnd.toISOString().slice(0, 10);
+  const { lte, gte, ne, isNotNull } = await import("drizzle-orm");
+  const allActive = await db.select().from(qaWorkflows).where(
+    and(
+      isNotNull(qaWorkflows.deadline),
+      ne(qaWorkflows.status, "approved"),
+      ne(qaWorkflows.archived, "1"),
+    )
+  );
+  // Filter in JS since deadline is a varchar string
+  return allActive.filter(w => {
+    if (!w.deadline) return false;
+    return w.deadline >= todayStr && w.deadline <= windowEndStr;
+  });
+}
+
 // ─── Workflow Logs ─────────────────────────────────────────────────────────────
 export async function addWorkflowLog(data: InsertWorkflowLog) {
   const db = await getDb();
@@ -169,4 +211,25 @@ export async function getWorkflowLogs(filters?: {
     .limit(filters?.limit ?? 200);
 
   return await query;
+}
+
+// ─── Team Emails ───────────────────────────────────────────────────────────────
+export async function upsertTeamEmail(name: string, email: string, role: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(teamEmails).values({ name, email, role })
+    .onDuplicateKeyUpdate({ set: { email, role } });
+}
+
+export async function getTeamEmailByName(name: string): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(teamEmails).where(eq(teamEmails.name, name)).limit(1);
+  return result.length > 0 ? result[0]!.email : null;
+}
+
+export async function getAllTeamEmails(): Promise<{ name: string; email: string; role: string }[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select({ name: teamEmails.name, email: teamEmails.email, role: teamEmails.role }).from(teamEmails);
 }

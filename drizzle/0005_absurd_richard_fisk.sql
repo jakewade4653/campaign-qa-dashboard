@@ -1,0 +1,1 @@
+ALTER TABLE `qa_workflows` ADD `deadlineReminderSentAt` timestamp;

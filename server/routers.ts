@@ -10,7 +10,11 @@ import {
   updateWorkflow,
   addWorkflowLog,
   getWorkflowLogs,
+  upsertTeamEmail,
+  getTeamEmailByName,
 } from "./db";
+import { sendSignOffNotification, sendFailItemNotification } from "./email";
+import { getAllTeamEmails as getAllTeamEmailsFn } from "./db";
 
 const checkItemSchema = z.object({
   status: z.enum(["pass", "fail", "na", "pending"]),
@@ -126,6 +130,28 @@ export const appRouter = router({
           platform: wf.platform,
           launchType: wf.launchType,
         });
+        // If item is marked FAIL, notify the builder by email
+        if (input.item.status === "fail") {
+          const builderSignOff = wf.builderSignOff as { name?: string } | null;
+          const builderName = builderSignOff?.name ?? wf.createdByName ?? null;
+          if (builderName) {
+            getTeamEmailByName(builderName).then(builderEmail => {
+              if (builderEmail) {
+                sendFailItemNotification({
+                  toName: builderName,
+                  toEmail: builderEmail,
+                  reviewerName: input.actorName,
+                  reviewerRole: input.actorRole,
+                  campaignName: wf.campaignName,
+                  itemLabel: input.itemId.replace(/_/g, " "),
+                  sectionLabel: input.sectionId.replace(/_/g, " "),
+                  note: input.item.note ?? null,
+                  workflowUrl: `${process.env.VITE_FRONTEND_FORGE_API_URL ?? ""}/workflow/${input.workflowId}`,
+                }).catch(console.error);
+              }
+            }).catch(console.error);
+          }
+        }
         return { success: true };
       }),
 
@@ -162,6 +188,30 @@ export const appRouter = router({
           platform: wf.platform,
           launchType: wf.launchType,
         });
+        // Notify the next reviewer by email
+        const nextRoleMap: Record<string, string> = { builder: "qa1", qa1: "qa2", qa2: "md" };
+        const nextRole = nextRoleMap[input.role];
+        if (nextRole) {
+          getAllTeamEmailsFn().then(allEmails => {
+            const nextReviewers = allEmails.filter((e: { role: string }) => e.role === nextRole);
+            const workflowUrl = `${process.env.VITE_FRONTEND_FORGE_API_URL ?? ""}/workflow/${input.workflowId}`;
+            for (const reviewer of nextReviewers as { name: string; email: string; role: string }[]) {
+              sendSignOffNotification({
+                toName: reviewer.name,
+                toEmail: reviewer.email,
+                fromName: input.name,
+                fromRole: input.role,
+                nextRole,
+                campaignName: wf.campaignName,
+                launchType: wf.launchType,
+                platform: wf.platform,
+                client: wf.client,
+                deadline: wf.deadline ?? null,
+                workflowUrl,
+              }).catch(console.error);
+            }
+          }).catch(console.error);
+        }
         return { success: true, newStatus: statusMap[input.role] };
       }),
 
@@ -240,6 +290,23 @@ export const appRouter = router({
       }),
   }),
 
+  team: router({
+    upsertEmail: publicProcedure
+      .input(z.object({
+        name: z.string(),
+        email: z.string().email(),
+        role: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertTeamEmail(input.name, input.email, input.role);
+        return { success: true };
+      }),
+    getEmails: publicProcedure
+      .query(async () => {
+        const { getAllTeamEmails } = await import("./db");
+        return await getAllTeamEmails();
+      }),
+  }),
   logs: router({
     list: publicProcedure
       .input(z.object({

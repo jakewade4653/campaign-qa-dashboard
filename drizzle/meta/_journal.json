@@ -29,6 +29,20 @@
       "when": 1776888871007,
       "tag": "0003_legal_darkhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1776948556141,
+      "tag": "0004_exotic_magdalene",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1776949177315,
+      "tag": "0005_absurd_richard_fisk",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAppAuth } from "@/contexts/AppAuthContext";
 import type { ReviewerRole } from "@/contexts/AppAuthContext";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +22,9 @@ const ROLES: ReviewerRole[] = ["builder", "qa1", "qa2", "md"];
 
 export default function Login() {
   const { login } = useAppAuth();
+  const upsertEmail = trpc.team.upsertEmail.useMutation();
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [role, setRole] = useState<ReviewerRole>("builder");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -34,7 +37,15 @@ export default function Login() {
       setError("Please enter your name.");
       return;
     }
-    const ok = login(password, name, role);
+    if (!email.trim() || !email.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    const ok = login(password, name, role, email);
+    if (ok) {
+      // Save email to DB so server can route notifications
+      upsertEmail.mutate({ name: name.trim(), email: email.trim(), role });
+    }
     if (!ok) {
       setError("Incorrect password. Please try again.");
       setShaking(true);
@@ -86,6 +97,19 @@ export default function Login() {
                 placeholder="e.g. Jake Wade"
                 className="mt-1.5 h-9 text-sm"
                 autoFocus
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold" style={{ color: "#000033" }}>
+                Your Email
+              </Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                placeholder="e.g. jake@jump450.com"
+                className="mt-1.5 h-9 text-sm"
               />
             </div>
 

@@ -25,3 +25,13 @@
 - [x] Auto-populate reviewer name and role from saved session in WorkflowDetail
 - [x] Add deadline field to workflow (DB column, New Workflow wizard, edit on detail page)
 - [x] Show deadline status on dashboard (overdue/due soon/on track badges) and workflow detail header
+- [x] Add email field to login screen, save to session/localStorage
+- [x] Add email field to reviewer settings in WorkflowDetail
+- [x] Store team member emails in DB (team_emails table keyed by name+role)
+- [x] Set up Resend transactional email integration
+- [x] Send email to next reviewer when sign-off is submitted (Builder→QA1→QA2→MD chain)
+- [x] Send email to builder when any checklist item is marked Fail
+- [x] Send email to workflow creator when deadline is within 24 hours
+- [x] Implement deadline reminder scheduled job (server-side check, fires 24h before deadline)
+- [x] Add vitest coverage for deadline reminder job (5 tests passing)
+- [x] Persist deadline reminder sent state in DB (deadlineReminderSentAt column, migration applied)

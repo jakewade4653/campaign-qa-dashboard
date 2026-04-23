@@ -38,6 +38,13 @@ vi.mock("./db", () => ({
   }),
   updateWorkflow: vi.fn().mockResolvedValue(undefined),
   addWorkflowLog: vi.fn().mockResolvedValue(undefined),
+  upsertUser: vi.fn().mockResolvedValue(undefined),
+  getUserByOpenId: vi.fn().mockResolvedValue(undefined),
+  upsertTeamEmail: vi.fn().mockResolvedValue(undefined),
+  getTeamEmailByName: vi.fn().mockResolvedValue(null),
+  getAllTeamEmails: vi.fn().mockResolvedValue([]),
+  archiveWorkflow: vi.fn().mockResolvedValue(undefined),
+  updateWorkflowDeadline: vi.fn().mockResolvedValue(undefined),
   getWorkflowLogs: vi.fn().mockResolvedValue([
     {
       id: 1,

@@ -86,6 +86,7 @@ export const qaWorkflows = mysqlTable("qa_workflows", {
   checklistData: json("checklistData"),
   createdByName: varchar("createdByName", { length: 100 }),
   deadline: varchar("deadline", { length: 20 }), // ISO date string YYYY-MM-DD
+  deadlineReminderSentAt: timestamp("deadlineReminderSentAt"),
   archived: mysqlEnum("archived", ["0", "1"]).default("0").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -111,4 +112,15 @@ export const workflowLogs = mysqlTable("workflow_logs", {
 });
 
 export type WorkflowLog = typeof workflowLogs.$inferSelect;
-export type InsertWorkflowLog = typeof workflowLogs.$inferInsert;
+export type InsertWorkflowLog = typeof workflowLogs.$inferInsert;// ─── Team Member Emails ────────────────────────────────────────────────────────
+// Stores email addresses keyed by name so notifications can be routed correctly.
+// Updated each time a user logs in with an email address.
+export const teamEmails = mysqlTable("team_emails", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  email: varchar("email", { length: 320 }).notNull(),
+  role: varchar("role", { length: 20 }).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TeamEmail = typeof teamEmails.$inferSelect;
+export type InsertTeamEmail = typeof teamEmails.$inferInsert;

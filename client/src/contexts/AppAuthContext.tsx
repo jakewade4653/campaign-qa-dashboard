@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
 const SESSION_KEY = "qa_session";
 const PASSWORD = "galveston";
@@ -8,14 +8,15 @@ export type ReviewerRole = "builder" | "qa1" | "qa2" | "md";
 export interface AppSession {
   name: string;
   role: ReviewerRole;
+  email: string;
   authenticated: boolean;
 }
 
 interface AppAuthContextValue {
   session: AppSession | null;
-  login: (password: string, name: string, role: ReviewerRole) => boolean;
+  login: (password: string, name: string, role: ReviewerRole, email: string) => boolean;
   logout: () => void;
-  updateSession: (name: string, role: ReviewerRole) => void;
+  updateSession: (name: string, role: ReviewerRole, email: string) => void;
 }
 
 const AppAuthContext = createContext<AppAuthContextValue | null>(null);
@@ -32,9 +33,9 @@ export function AppAuthProvider({ children }: { children: ReactNode }) {
     return null;
   });
 
-  const login = (password: string, name: string, role: ReviewerRole): boolean => {
+  const login = (password: string, name: string, role: ReviewerRole, email: string): boolean => {
     if (password.trim().toLowerCase() !== PASSWORD) return false;
-    const newSession: AppSession = { name: name.trim(), role, authenticated: true };
+    const newSession: AppSession = { name: name.trim(), role, email: email.trim(), authenticated: true };
     setSession(newSession);
     localStorage.setItem(SESSION_KEY, JSON.stringify(newSession));
     return true;
@@ -45,8 +46,8 @@ export function AppAuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(SESSION_KEY);
   };
 
-  const updateSession = (name: string, role: ReviewerRole) => {
-    const updated: AppSession = { name, role, authenticated: true };
+  const updateSession = (name: string, role: ReviewerRole, email: string) => {
+    const updated: AppSession = { name, role, email, authenticated: true };
     setSession(updated);
     localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
   };
