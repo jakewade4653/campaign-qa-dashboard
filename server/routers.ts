@@ -13,14 +13,20 @@ import {
   upsertTeamEmail,
   getTeamEmailByName,
 } from "./db";
-import { sendSignOffNotification, sendFailItemNotification } from "./email";
+import {
+  sendSignOffNotification,
+  sendFailItemNotification,
+  sendNotifyNextReviewerEmail,
+} from "./email";
 import { getAllTeamEmails as getAllTeamEmailsFn } from "./db";
+
+const REVIEWER_ROLE_ENUM = z.enum(["builder", "qa1", "qa2", "md", "ed"]);
 
 const checkItemSchema = z.object({
   status: z.enum(["pass", "fail", "na", "pending"]),
   note: z.string().optional(),
   reviewer: z.string().optional(),
-  reviewerRole: z.enum(["builder", "qa1", "qa2", "md"]).optional(),
+  reviewerRole: REVIEWER_ROLE_ENUM.optional(),
   updatedAt: z.string().optional(),
 });
 
@@ -109,7 +115,7 @@ export const appRouter = router({
         itemId: z.string(),
         item: checkItemSchema,
         actorName: z.string(),
-        actorRole: z.enum(["builder", "qa1", "qa2", "md"]),
+        actorRole: REVIEWER_ROLE_ENUM,
       }))
       .mutation(async ({ input }) => {
         const wf = await getWorkflowById(input.workflowId);
@@ -158,7 +164,7 @@ export const appRouter = router({
     signOff: publicProcedure
       .input(z.object({
         workflowId: z.number(),
-        role: z.enum(["builder", "qa1", "qa2", "md"]),
+        role: REVIEWER_ROLE_ENUM,
         name: z.string(),
       }))
       .mutation(async ({ input }) => {
@@ -170,12 +176,14 @@ export const appRouter = router({
           qa1: "pending_qa2",
           qa2: "pending_md",
           md: "approved",
+          ed: "approved",
         };
         const updateData: Record<string, unknown> = { status: statusMap[input.role] ?? wf.status };
         if (input.role === "builder") updateData.builderSignOff = signOff;
         if (input.role === "qa1") updateData.qa1SignOff = signOff;
         if (input.role === "qa2") updateData.qa2SignOff = signOff;
         if (input.role === "md") { updateData.mdSignOff = signOff; updateData.completedAt = new Date(); }
+        if (input.role === "ed") { updateData.mdSignOff = signOff; updateData.completedAt = new Date(); }
         await updateWorkflow(input.workflowId, updateData as any);
         await addWorkflowLog({
           workflowId: input.workflowId,
@@ -215,12 +223,52 @@ export const appRouter = router({
         return { success: true, newStatus: statusMap[input.role] };
       }),
 
+    notifyNextReviewer: publicProcedure
+      .input(z.object({
+        workflowId: z.number(),
+        toEmail: z.string().email(),
+        toName: z.string(),
+        actorName: z.string(),
+        actorRole: REVIEWER_ROLE_ENUM,
+        customNote: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const wf = await getWorkflowById(input.workflowId);
+        if (!wf) throw new Error("Workflow not found");
+        const workflowUrl = `${process.env.VITE_FRONTEND_FORGE_API_URL ?? ""}/workflow/${input.workflowId}`;
+        await sendNotifyNextReviewerEmail({
+          toName: input.toName,
+          toEmail: input.toEmail,
+          fromName: input.actorName,
+          fromRole: input.actorRole,
+          campaignName: wf.campaignName,
+          launchType: wf.launchType,
+          platform: wf.platform,
+          client: wf.client,
+          deadline: wf.deadline ?? null,
+          workflowUrl,
+          customNote: input.customNote ?? null,
+        });
+        await addWorkflowLog({
+          workflowId: input.workflowId,
+          actorName: input.actorName,
+          actorRole: input.actorRole,
+          action: "notification_sent",
+          details: { toEmail: input.toEmail, toName: input.toName, note: input.customNote },
+          campaignName: wf.campaignName,
+          client: wf.client,
+          platform: wf.platform,
+          launchType: wf.launchType,
+        });
+        return { success: true };
+      }),
+
     updateStatus: publicProcedure
       .input(z.object({
         workflowId: z.number(),
         status: workflowStatusSchema,
         actorName: z.string(),
-        actorRole: z.enum(["builder", "qa1", "qa2", "md"]),
+        actorRole: REVIEWER_ROLE_ENUM,
         reason: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
@@ -306,7 +354,19 @@ export const appRouter = router({
         const { getAllTeamEmails } = await import("./db");
         return await getAllTeamEmails();
       }),
+    deleteEmail: publicProcedure
+      .input(z.object({ name: z.string() }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const { teamEmails } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        await db.delete(teamEmails).where(eq(teamEmails.name, input.name));
+        return { success: true };
+      }),
   }),
+
   logs: router({
     list: publicProcedure
       .input(z.object({

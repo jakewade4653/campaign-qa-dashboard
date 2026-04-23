@@ -6,6 +6,18 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // swap for a verified custom domain when ready (e.g. qa@jump450.com)
 const FROM = "Campaign QA Dashboard <onboarding@resend.dev>";
 
+// Jenna Radomsky is always CC'd on all QA notification emails
+const CC_ALWAYS = ["jenna.radomsky@omc.com"];
+
+// Shared role labels used across all email helpers
+const ROLE_LABELS: Record<string, string> = {
+  builder: "Builder",
+  qa1: "QA1 (Manager)",
+  qa2: "QA2 (Associate Director)",
+  md: "MD",
+  ed: "ED",
+};
+
 export interface NotifySignOffParams {
   toName: string;
   toEmail: string;
@@ -18,6 +30,7 @@ export interface NotifySignOffParams {
   client: string;
   deadline?: string | null;
   workflowUrl: string;
+  customNote?: string | null;
 }
 
 export interface NotifyFailItemParams {
@@ -41,6 +54,20 @@ export interface NotifyDeadlineParams {
   workflowUrl: string;
 }
 
+export interface NotifyNextReviewerParams {
+  toName: string;
+  toEmail: string;
+  fromName: string;
+  fromRole: string;
+  campaignName: string;
+  launchType: string;
+  platform: string;
+  client: string;
+  deadline?: string | null;
+  workflowUrl: string;
+  customNote?: string | null;
+}
+
 function baseHtml(title: string, body: string): string {
   return `<!DOCTYPE html>
 <html>
@@ -61,6 +88,7 @@ function baseHtml(title: string, body: string): string {
     .meta-table td:first-child { color: #6B7280; width: 110px; }
     .meta-table td:last-child { color: #000033; font-weight: 600; }
     .cta { display: inline-block; background: #E8321A; color: #fff !important; text-decoration: none; padding: 10px 22px; border-radius: 6px; font-size: 14px; font-weight: bold; margin-top: 4px; }
+    .note-box { background: #FEF3C7; border-left: 3px solid #F59E0B; padding: 10px 14px; border-radius: 4px; font-size: 13px; color: #92400E; margin-bottom: 16px; }
     .footer { background: #F9FAFB; padding: 16px 28px; font-size: 11px; color: #9CA3AF; border-top: 1px solid #E5E7EB; }
   </style>
 </head>
@@ -85,19 +113,13 @@ function baseHtml(title: string, body: string): string {
 export async function sendSignOffNotification(params: NotifySignOffParams): Promise<boolean> {
   const {
     toName, toEmail, fromName, fromRole, nextRole,
-    campaignName, launchType, platform, client, deadline, workflowUrl,
+    campaignName, launchType, platform, client, deadline, workflowUrl, customNote,
   } = params;
-
-  const roleLabels: Record<string, string> = {
-    builder: "Builder",
-    qa1: "QA1 (Manager)",
-    qa2: "QA2 (Associate Director)",
-    md: "MD",
-  };
 
   const body = `
     <p>Hi ${toName},</p>
-    <p><strong>${fromName}</strong> (${roleLabels[fromRole] ?? fromRole}) has completed their review and it's now your turn as <strong>${roleLabels[nextRole] ?? nextRole}</strong>.</p>
+    <p><strong>${fromName}</strong> (${ROLE_LABELS[fromRole] ?? fromRole}) has completed their review and it's now your turn as <strong>${ROLE_LABELS[nextRole] ?? nextRole}</strong>.</p>
+    ${customNote ? `<div class="note-box"><strong>Note from ${fromName}:</strong> ${customNote}</div>` : ""}
     <table class="meta-table">
       <tr><td>Campaign</td><td>${campaignName}</td></tr>
       <tr><td>Client</td><td>${client}</td></tr>
@@ -112,7 +134,8 @@ export async function sendSignOffNotification(params: NotifySignOffParams): Prom
     const { error } = await resend.emails.send({
       from: FROM,
       to: [toEmail],
-      subject: `[QA Action Required] ${campaignName} — ${roleLabels[nextRole] ?? nextRole} Review`,
+      cc: CC_ALWAYS,
+      subject: `[QA Action Required] ${campaignName} — ${ROLE_LABELS[nextRole] ?? nextRole} Review`,
       html: baseHtml(`Your QA review is ready`, body),
     });
     if (error) {
@@ -132,16 +155,9 @@ export async function sendFailItemNotification(params: NotifyFailItemParams): Pr
     campaignName, itemLabel, sectionLabel, note, workflowUrl,
   } = params;
 
-  const roleLabels: Record<string, string> = {
-    builder: "Builder",
-    qa1: "QA1 (Manager)",
-    qa2: "QA2 (Associate Director)",
-    md: "MD",
-  };
-
   const body = `
     <p>Hi ${toName},</p>
-    <p><strong>${reviewerName}</strong> (${roleLabels[reviewerRole] ?? reviewerRole}) has marked a checklist item as <strong style="color:#DC2626">FAIL</strong> on <strong>${campaignName}</strong>.</p>
+    <p><strong>${reviewerName}</strong> (${ROLE_LABELS[reviewerRole] ?? reviewerRole}) has marked a checklist item as <strong style="color:#DC2626">FAIL</strong> on <strong>${campaignName}</strong>.</p>
     <table class="meta-table">
       <tr><td>Campaign</td><td>${campaignName}</td></tr>
       <tr><td>Section</td><td>${sectionLabel}</td></tr>
@@ -156,6 +172,7 @@ export async function sendFailItemNotification(params: NotifyFailItemParams): Pr
     const { error } = await resend.emails.send({
       from: FROM,
       to: [toEmail],
+      cc: CC_ALWAYS,
       subject: `[QA Fail] ${campaignName} — ${itemLabel}`,
       html: baseHtml(`Checklist item marked FAIL`, body),
     });
@@ -189,6 +206,7 @@ export async function sendDeadlineReminderNotification(params: NotifyDeadlinePar
     const { error } = await resend.emails.send({
       from: FROM,
       to: [toEmail],
+      cc: CC_ALWAYS,
       subject: `[QA Deadline] ${campaignName} is ${urgency}`,
       html: baseHtml(`QA deadline reminder`, body),
     });
@@ -199,6 +217,45 @@ export async function sendDeadlineReminderNotification(params: NotifyDeadlinePar
     return true;
   } catch (err) {
     console.error("[Email] sendDeadlineReminderNotification exception:", err);
+    return false;
+  }
+}
+
+export async function sendNotifyNextReviewerEmail(params: NotifyNextReviewerParams): Promise<boolean> {
+  const {
+    toName, toEmail, fromName, fromRole,
+    campaignName, launchType, platform, client, deadline, workflowUrl, customNote,
+  } = params;
+
+  const body = `
+    <p>Hi ${toName},</p>
+    <p><strong>${fromName}</strong> (${ROLE_LABELS[fromRole] ?? fromRole}) is requesting your review on <strong>${campaignName}</strong>.</p>
+    ${customNote ? `<div class="note-box"><strong>Message from ${fromName}:</strong> ${customNote}</div>` : ""}
+    <table class="meta-table">
+      <tr><td>Campaign</td><td>${campaignName}</td></tr>
+      <tr><td>Client</td><td>${client}</td></tr>
+      <tr><td>Platform</td><td>${platform}</td></tr>
+      <tr><td>Launch Type</td><td>${launchType}</td></tr>
+      ${deadline ? `<tr><td>QA Deadline</td><td>${deadline}</td></tr>` : ""}
+    </table>
+    <a href="${workflowUrl}" class="cta">Open Checklist →</a>
+  `;
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to: [toEmail],
+      cc: CC_ALWAYS,
+      subject: `[QA Review Requested] ${campaignName}`,
+      html: baseHtml(`QA review requested`, body),
+    });
+    if (error) {
+      console.error("[Email] sendNotifyNextReviewerEmail error:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[Email] sendNotifyNextReviewerEmail exception:", err);
     return false;
   }
 }

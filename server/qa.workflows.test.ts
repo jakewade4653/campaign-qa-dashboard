@@ -3,6 +3,12 @@ import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
 // Mock the db module
+vi.mock("./email", () => ({
+  sendSignOffNotification: vi.fn().mockResolvedValue(true),
+  sendFailItemNotification: vi.fn().mockResolvedValue(true),
+  sendNotifyNextReviewerEmail: vi.fn().mockResolvedValue(true),
+}));
+
 vi.mock("./db", () => ({
   createWorkflow: vi.fn().mockResolvedValue(42),
   getWorkflows: vi.fn().mockResolvedValue([
@@ -157,6 +163,45 @@ describe("workflows.signOff", () => {
     });
     expect(result.success).toBe(true);
     expect(result.newStatus).toBe("approved");
+  });
+
+  it("signs off as ed and advances to approved", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    const result = await caller.workflows.signOff({
+      workflowId: 1,
+      role: "ed",
+      name: "Rob Pearsall",
+    });
+    expect(result.success).toBe(true);
+    expect(result.newStatus).toBe("approved");
+  });
+});
+
+describe("workflows.notifyNextReviewer", () => {
+  it("sends a notification email and returns success", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    const result = await caller.workflows.notifyNextReviewer({
+      workflowId: 1,
+      toEmail: "rob.pearsall@omc.com",
+      toName: "Rob Pearsall",
+      actorName: "Jake Wade",
+      actorRole: "md",
+      customNote: "Please review ASAP",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid email", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    await expect(
+      caller.workflows.notifyNextReviewer({
+        workflowId: 1,
+        toEmail: "not-an-email",
+        toName: "Rob Pearsall",
+        actorName: "Jake Wade",
+        actorRole: "md",
+      })
+    ).rejects.toThrow();
   });
 });
 

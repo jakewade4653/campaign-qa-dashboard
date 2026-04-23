@@ -539,6 +539,7 @@ export const REVIEWER_LABELS: Record<string, string> = {
   qa1: "QA 1 — Manager",
   qa2: "QA 2 — Associate Director",
   md: "MD Final QA",
+  ed: "ED",
 };
 
 export const STATUS_LABELS: Record<string, string> = {

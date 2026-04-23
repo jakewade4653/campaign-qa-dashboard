@@ -35,3 +35,13 @@
 - [x] Implement deadline reminder scheduled job (server-side check, fires 24h before deadline)
 - [x] Add vitest coverage for deadline reminder job (5 tests passing)
 - [x] Persist deadline reminder sent state in DB (deadlineReminderSentAt column, migration applied)
+- [x] Add "Notify Next Reviewer" button on WorkflowDetail page
+- [x] Build email input modal — pre-fills from session, lets user enter/confirm recipient email and add a note
+- [x] Add notifyNextReviewer tRPC mutation that sends email via Resend
+- [x] Log notification action to workflow_logs
+- [x] Add ED role to login role dropdown and all role references
+- [x] Pre-seed team_emails with Jake Wade (MD) and Rob Pearsall (ED) on server startup
+- [x] Build Team Settings page — view/add/edit team members (name, email, role)
+- [x] Add "Notify Next Reviewer" button on WorkflowDetail — opens modal with recipient email input and optional note
+- [x] Add notifyNextReviewer tRPC mutation that sends email via Resend and logs to workflow_logs
+- [x] CC jenna.radomsky@omc.com on all QA notification emails (sign-off, fail item, deadline reminder, notify next reviewer)

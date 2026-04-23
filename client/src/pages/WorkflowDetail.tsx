@@ -45,10 +45,11 @@ import {
   Shield,
   Download,
   CalendarClock,
+  Bell,
 } from "lucide-react";
 
 type CheckStatus = "pass" | "fail" | "na" | "pending";
-type ReviewerRole = "builder" | "qa1" | "qa2" | "md";
+type ReviewerRole = "builder" | "qa1" | "qa2" | "md" | "ed";
 
 // Pill-style status badges — clearly clickable
 const STATUS_PILL: Record<CheckStatus, React.ReactNode> = {
@@ -82,12 +83,13 @@ const STATUS_ICON: Record<CheckStatus, React.ReactNode> = {
   pending: <Clock size={15} className="text-amber-500" />,
 };
 
-const REVIEWER_ORDER: ReviewerRole[] = ["builder", "qa1", "qa2", "md"];
+const REVIEWER_ORDER: ReviewerRole[] = ["builder", "qa1", "qa2", "md", "ed"];
 const REVIEWER_SHORT: Record<ReviewerRole, string> = {
   builder: "B",
   qa1: "Q1",
   qa2: "Q2",
   md: "MD",
+  ed: "ED",
 };
 
 function getCompletionForSection(
@@ -120,6 +122,10 @@ export default function WorkflowDetail() {
   const [signOffModal, setSignOffModal] = useState(false);
   const [editingDeadline, setEditingDeadline] = useState(false);
   const [deadlineInput, setDeadlineInput] = useState("");
+  const [notifyModal, setNotifyModal] = useState(false);
+  const [notifyToEmail, setNotifyToEmail] = useState("");
+  const [notifyToName, setNotifyToName] = useState("");
+  const [notifyNote, setNotifyNote] = useState("");
 
   const utils = trpc.useUtils();
 
@@ -147,6 +153,20 @@ export default function WorkflowDetail() {
       toast.success("Signed off successfully");
       utils.workflows.byId.invalidate({ id: workflowId });
       setSignOffModal(false);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  // Fetch team roster to pre-fill notify modal
+  const { data: teamEmails = [] } = trpc.team.getEmails.useQuery();
+
+  const notifyNextReviewerMutation = trpc.workflows.notifyNextReviewer.useMutation({
+    onSuccess: () => {
+      toast.success("Notification sent successfully");
+      setNotifyModal(false);
+      setNotifyToEmail("");
+      setNotifyToName("");
+      setNotifyNote("");
     },
     onError: (err) => toast.error(err.message),
   });
@@ -249,11 +269,12 @@ export default function WorkflowDetail() {
   const statusColor = STATUS_COLORS[workflow.status] ?? "bg-gray-100 text-gray-700";
   const statusLabel = STATUS_LABELS[workflow.status] ?? workflow.status;
 
-  const signOffs = {
+  const signOffs: Record<ReviewerRole, { name: string; timestamp: string } | null> = {
     builder: workflow.builderSignOff as { name: string; timestamp: string } | null,
     qa1: workflow.qa1SignOff as { name: string; timestamp: string } | null,
     qa2: workflow.qa2SignOff as { name: string; timestamp: string } | null,
     md: workflow.mdSignOff as { name: string; timestamp: string } | null,
+    ed: null, // ED sign-off not stored separately; treated as an additional reviewer role
   };
 
   const handleExportPDF = () => {
@@ -584,16 +605,37 @@ export default function WorkflowDetail() {
         <div className="text-xs text-muted-foreground">
           Click any item below to cycle: <span className="font-semibold text-amber-600">Pending</span> → <span className="font-semibold text-green-600">Pass</span> → <span className="font-semibold text-red-500">Fail</span> → <span className="font-semibold text-slate-500">N/A</span>
         </div>
-        <Button
-          size="sm"
-          onClick={() => setSignOffModal(true)}
-          disabled={!reviewerName.trim()}
-          className="gap-1.5 text-white ml-auto"
-          style={{ backgroundColor: "#000033", borderColor: "#000033" }}
-        >
-          <Shield size={13} />
-          Sign Off
-        </Button>
+        <div className="flex items-center gap-2 ml-auto">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              // Determine next role in the chain and pre-fill from team roster
+              const nextRoleMap: Record<string, string> = { builder: "qa1", qa1: "qa2", qa2: "md", md: "ed" };
+              const nextRole = nextRoleMap[activeRole];
+              const nextReviewer = nextRole ? teamEmails.find((m: { role: string }) => m.role === nextRole) : undefined;
+              setNotifyToName(nextReviewer?.name ?? "");
+              setNotifyToEmail(nextReviewer?.email ?? "");
+              setNotifyNote("");
+              setNotifyModal(true);
+            }}
+            disabled={!reviewerName.trim()}
+            className="gap-1.5"
+          >
+            <Bell size={13} />
+            Notify Reviewer
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setSignOffModal(true)}
+            disabled={!reviewerName.trim()}
+            className="gap-1.5 text-white"
+            style={{ backgroundColor: "#000033", borderColor: "#000033" }}
+          >
+            <Shield size={13} />
+            Sign Off
+          </Button>
+        </div>
         </div>
       </div>
 
@@ -827,6 +869,85 @@ export default function WorkflowDetail() {
               style={{ backgroundColor: "#E8321A" }}
             >
               Save Note
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Notify Next Reviewer modal */}
+      <Dialog open={notifyModal} onOpenChange={(open) => {
+        setNotifyModal(open);
+        if (!open) { setNotifyToEmail(""); setNotifyToName(""); setNotifyNote(""); }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bell size={16} style={{ color: "#E8321A" }} />
+              Notify Next Reviewer
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 text-sm">
+            <p className="text-muted-foreground text-xs">
+              Send a notification email to the next reviewer for <strong>{workflow?.campaignName}</strong>.
+              Jenna Radomsky will be CC'd automatically.
+            </p>
+            <div>
+              <label className="text-xs font-semibold block mb-1.5" style={{ color: "#000033" }}>Recipient Name</label>
+              <Input
+                value={notifyToName}
+                onChange={(e) => setNotifyToName(e.target.value)}
+                placeholder="e.g. Rob Pearsall"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold block mb-1.5" style={{ color: "#000033" }}>Recipient Email</label>
+              <Input
+                type="email"
+                value={notifyToEmail}
+                onChange={(e) => setNotifyToEmail(e.target.value)}
+                placeholder="e.g. robert.pearsall@omc.com"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold block mb-1.5" style={{ color: "#000033" }}>Optional Note</label>
+              <Textarea
+                value={notifyNote}
+                onChange={(e) => setNotifyNote(e.target.value)}
+                placeholder="Add context or instructions for the reviewer..."
+                rows={3}
+                className="text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNotifyModal(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (!notifyToEmail.trim() || !notifyToEmail.includes("@")) {
+                  toast.error("Please enter a valid recipient email.");
+                  return;
+                }
+                if (!notifyToName.trim()) {
+                  toast.error("Please enter the recipient name.");
+                  return;
+                }
+                notifyNextReviewerMutation.mutate({
+                  workflowId,
+                  toEmail: notifyToEmail.trim(),
+                  toName: notifyToName.trim(),
+                  actorName: reviewerName || "Reviewer",
+                  actorRole: activeRole,
+                  customNote: notifyNote.trim() || undefined,
+                });
+              }}
+              disabled={notifyNextReviewerMutation.isPending}
+              className="text-white gap-1.5"
+              style={{ backgroundColor: "#E8321A" }}
+            >
+              <Bell size={13} />
+              {notifyNextReviewerMutation.isPending ? "Sending..." : "Send Notification"}
             </Button>
           </DialogFooter>
         </DialogContent>

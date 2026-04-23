@@ -9,6 +9,7 @@ import {
   Menu,
   LogOut,
   User,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppAuth } from "@/contexts/AppAuthContext";
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/new", icon: PlusCircle, label: "New Workflow" },
   { href: "/log", icon: ScrollText, label: "Activity Log" },
+  { href: "/team", icon: Users, label: "Team Settings" },
 ];
 
 interface DashboardLayoutProps {

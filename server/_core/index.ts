@@ -9,6 +9,19 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { startDeadlineReminderScheduler } from "../deadlineReminder";
+import { upsertTeamEmail } from "../db";
+
+/** Pre-seed the core team roster so notification routing works out of the box. */
+async function seedTeamRoster(): Promise<void> {
+  try {
+    await upsertTeamEmail("Jake Wade", "jake.wade@omc.com", "md");
+    await upsertTeamEmail("Rob Pearsall", "robert.pearsall@omc.com", "ed");
+    await upsertTeamEmail("Jenna Radomsky", "jenna.radomsky@omc.com", "qa2");
+    console.log("[TeamSeed] Core team roster seeded.");
+  } catch (err) {
+    console.warn("[TeamSeed] Could not seed team roster:", err);
+  }
+}
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -59,8 +72,10 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
+  server.listen(port, async () => {
     console.log(`Server running on http://localhost:${port}/`);
+    // Pre-seed core team roster
+    await seedTeamRoster();
     // Start the hourly deadline reminder email job
     startDeadlineReminderScheduler();
   });

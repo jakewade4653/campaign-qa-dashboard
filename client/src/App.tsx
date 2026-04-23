@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import NewWorkflow from "./pages/NewWorkflow";
 import WorkflowDetail from "./pages/WorkflowDetail";
 import WorkflowLog from "./pages/WorkflowLog";
+import TeamSettings from "./pages/TeamSettings";
 import Login from "./pages/Login";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
         <Route path="/new" component={NewWorkflow} />
         <Route path="/workflow/:id" component={WorkflowDetail} />
         <Route path="/log" component={WorkflowLog} />
+        <Route path="/team" component={TeamSettings} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

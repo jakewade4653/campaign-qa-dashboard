@@ -3,7 +3,7 @@ import { createContext, useContext, useState, ReactNode } from "react";
 const SESSION_KEY = "qa_session";
 const PASSWORD = "galveston";
 
-export type ReviewerRole = "builder" | "qa1" | "qa2" | "md";
+export type ReviewerRole = "builder" | "qa1" | "qa2" | "md" | "ed";
 
 export interface AppSession {
   name: string;

@@ -18,7 +18,7 @@ import { Eye, EyeOff, LogIn } from "lucide-react";
 const OMD_LOGO = "/manus-storage/OMDLogo_8cc3ac67.svg";
 const MSC_LOGO = "/manus-storage/MSCCruisesUSA-BlueLogo_5e8365c6.png";
 
-const ROLES: ReviewerRole[] = ["builder", "qa1", "qa2", "md"];
+const ROLES: ReviewerRole[] = ["builder", "qa1", "qa2", "md", "ed"];
 
 export default function Login() {
   const { login } = useAppAuth();
