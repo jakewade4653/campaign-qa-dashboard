@@ -69,7 +69,7 @@ export default function WorkflowLog() {
   const { data: logs = [], isLoading, refetch } = trpc.logs.list.useQuery({});
 
   const filtered = useMemo(() => {
-    return logs.filter((log) => {
+    return logs.filter((log: (typeof logs)[0]) => {
       const matchSearch =
         !search ||
         (log.campaignName ?? "").toLowerCase().includes(search.toLowerCase()) ||
@@ -112,9 +112,9 @@ export default function WorkflowLog() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Total Events", value: logs.length },
-          { label: "Workflows Created", value: logs.filter((l) => l.action === "workflow_created").length },
-          { label: "Items Updated", value: logs.filter((l) => l.action === "item_updated").length },
-          { label: "Sign-Offs", value: logs.filter((l) => l.action === "signed_off").length },
+          { label: "Workflows Created", value: logs.filter((l: (typeof logs)[0]) => l.action === "workflow_created").length },
+          { label: "Items Updated", value: logs.filter((l: (typeof logs)[0]) => l.action === "item_updated").length },
+          { label: "Sign-Offs", value: logs.filter((l: (typeof logs)[0]) => l.action === "signed_off").length },
         ].map(({ label, value }) => (
           <div
             key={label}
@@ -205,7 +205,7 @@ export default function WorkflowLog() {
           </div>
         ) : (
           <div className="divide-y" style={{ borderColor: "#F1F5F9" }}>
-            {filtered.map((log) => {
+            {filtered.map((log: (typeof logs)[0]) => {
               const actionColor = ACTION_COLORS[log.action] ?? "bg-gray-100 text-gray-700";
               const roleColor = ROLE_COLORS[log.actorRole] ?? "bg-gray-200 text-gray-700";
               const details = formatDetails(log.action, log.details);

@@ -12,13 +12,26 @@ import {
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
-let _db: ReturnType<typeof drizzle> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _db: any = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
+// Uses connection pooling settings compatible with Vercel serverless functions.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const mysql2 = await import("mysql2/promise");
+      const pool = mysql2.createPool({
+        uri: process.env.DATABASE_URL,
+        connectionLimit: 5,
+        waitForConnections: true,
+        queueLimit: 0,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 0,
+        // Required for TiDB / PlanetScale SSL
+        ssl: process.env.DATABASE_URL?.includes("railway") || process.env.DATABASE_URL?.includes("tidb") ? { rejectUnauthorized: false } : undefined,
+      });
+      _db = drizzle(pool);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -177,7 +190,7 @@ export async function getWorkflowsDueForReminder(windowHours = 24): Promise<(typ
     )
   );
   // Filter in JS since deadline is a varchar string
-  return allActive.filter(w => {
+  return allActive.filter((w: typeof qaWorkflows.$inferSelect) => {
     if (!w.deadline) return false;
     return w.deadline >= todayStr && w.deadline <= windowEndStr;
   });

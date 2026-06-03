@@ -71,7 +71,7 @@ export default function Dashboard() {
   });
 
   const filtered = useMemo(() => {
-    return workflows.filter((wf) => {
+    return workflows.filter((wf: (typeof workflows)[0]) => {
       const matchSearch =
         !search ||
         wf.campaignName.toLowerCase().includes(search.toLowerCase()) ||
@@ -85,13 +85,13 @@ export default function Dashboard() {
   }, [workflows, search, filterLaunchType, filterStatus, filterPlatform]);
 
   const stats = useMemo(() => {
-    const active = workflows.filter((w) => w.archived === "0");
+    const active = workflows.filter((w: (typeof workflows)[0]) => w.archived === "0");
     const total = active.length;
-    const approved = active.filter((w) => w.status === "approved").length;
-    const inProgress = active.filter((w) =>
+    const approved = active.filter((w: (typeof workflows)[0]) => w.status === "approved").length;
+    const inProgress = active.filter((w: (typeof workflows)[0]) =>
       ["in_progress", "pending_qa1", "pending_qa2", "pending_md"].includes(w.status)
     ).length;
-    const rejected = active.filter((w) => w.status === "rejected").length;
+    const rejected = active.filter((w: (typeof workflows)[0]) => w.status === "rejected").length;
     return { total, approved, inProgress, rejected };
   }, [workflows]);
 
@@ -264,7 +264,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="divide-y" style={{ borderColor: "#F1F5F9" }}>
-            {filtered.map((wf) => {
+            {filtered.map((wf: (typeof workflows)[0]) => {
               const pct = getCompletionPct(wf.checklistData);
               const launchLabel = LAUNCH_TYPE_LABELS[wf.launchType as LaunchType] ?? wf.launchType;
               const platformLabel = PLATFORM_LABELS[wf.platform as Platform] ?? wf.platform;
