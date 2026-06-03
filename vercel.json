@@ -4,8 +4,11 @@
   "outputDirectory": "dist/public",
   "installCommand": "pnpm install",
   "functions": {
-    "api/server.js": {
+    "api/server.ts": {
       "maxDuration": 30
+    },
+    "api/cron/deadline-reminder.ts": {
+      "maxDuration": 60
     }
   },
   "rewrites": [
