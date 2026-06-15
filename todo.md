@@ -45,8 +45,8 @@
 - [x] Add "Notify Next Reviewer" button on WorkflowDetail — opens modal with recipient email input and optional note
 - [x] Add notifyNextReviewer tRPC mutation that sends email via Resend and logs to workflow_logs
 - [x] CC jenna.radomsky@omc.com on all QA notification emails (sign-off, fail item, deadline reminder, notify next reviewer)
-- [ ] Refactor Express server to Vercel serverless API handler (api/index.ts)
-- [ ] Add vercel.json with routes, cron config, and build settings
-- [ ] Fix database connection pooling for serverless (no persistent connections)
-- [ ] Move deadline reminder scheduler to Vercel Cron Job
-- [ ] Push to GitHub and guide Vercel deployment with env variables
+- [x] Refactor Express server to Vercel serverless API handler (api/index.ts)
+- [x] Add vercel.json with routes, cron config, and build settings
+- [x] Fix database connection pooling for serverless (no persistent connections)
+- [x] Move deadline reminder scheduler to Vercel Cron Job
+- [x] Push to GitHub and guide Vercel deployment with env variables
